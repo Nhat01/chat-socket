@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <title>Messenger</title>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
+   <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" />
+   <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css" />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css" />
+
+   <link rel="stylesheet" href="/css/main.css" />
+</head>
+
+<body>
+   <div class="main-wrapper">
+      <div class="container">
+         <div class="page-content">
+            <div class="container">
+               <div class="row wrap">
+                  <%- include('../partials/sideBar') %>
+                  <div class="col-md-8 col-12 card-stacked">
+                     <div class="card shadow-line mb-3 chat chat-panel">
+                        <div class="empty_message">
+                           <i
+                              data-visualcompletion="css-img"
+                              class=""
+                              style="
+                                 background-image: url('https://static.xx.fbcdn.net/rsrc.php/v3/yf/r/QG6amnX3-8_.png');
+                                 background-position: 0px -182px;
+                                 background-size: 248px 386px;
+                                 width: 244px;
+                                 height: 180px;
+                                 background-repeat: no-repeat;
+                                 display: inline-block;
+                              "
+                           ></i>
+                           <span>Chưa chọn đoạn chat nào</span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- Modal -->
+
+      <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+         <div class="modal-dialog" role="document">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Delete Conversation</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                     <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  Are you sure you want to delete this conversation
+               </div>
+               <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                  <button type="submit" class="btn btn-primary" onclick="handleClickDeleteConversation()">Yes</button>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+         <div class="modal-dialog modal-dialog-centered" role="document">
+            <form class="modal-content" id="createConvForm">
+               <input name="user_id" value="<%= user._id %>" hidden>
+               <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLongTitle">Create a group chat</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                     <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <div>
+                     <div class="container">
+                        <div class="pb-3">
+                           <div id="nameInputContainer" style="display: none">
+                              <label for="name" class="font-weight-bold">Name</label>
+                              <input class="form-control" id="name" name="name" type="text" />
+                           </div>
+                           <div class="mt-3">
+                              <label for="members" class="font-weight-bold">Members</label>
+                              <select class="form-control" id="choices-multiple-remove-button" placeholder="Select..."
+                                 multiple name="selectOptions" onchange="toggleNameInput()">
+                                 <% users.forEach(user=> { %>
+                                    <option value="<%= user._id %>">
+                                       <%= user.username %>
+                                    </option>
+                                    <% }) %>
+                              </select>
+                           </div>
+                        </div>
+                     </div>
+            </form>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+         </div>
+      </div>
+   </div>
+
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+   <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.7/js/min/perfect-scrollbar.jquery.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"></script>
+   <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+   <script>
+
+      (function ($) {
+         "use strict";
+         $(".scrollable-chat-panel").perfectScrollbar();
+         var position = $(".chat-search").last().position().top;
+         $(".scrollable-chat-panel").scrollTop(position);
+         $(".scrollable-chat-panel").perfectScrollbar("update");
+         $(".pagination-scrool").perfectScrollbar();
+
+         $(".chat-upload-trigger").on("click", function (e) {
+            $(this).parent().find(".chat-upload").toggleClass("active");
+         });
+         $(".user-detail-trigger").on("click", function (e) {
+            $(this)
+               .closest(".chat")
+               .find(".chat-user-detail")
+               .toggleClass("active");
+         });
+         $(".user-undetail-trigger").on("click", function (e) {
+            $(this)
+               .closest(".chat")
+               .find(".chat-user-detail")
+               .toggleClass("active");
+         })
+
+
+      })(jQuery)
+      $(document).ready(function () {
+         var multipleCancelButton = new Choices(
+            "#choices-multiple-remove-button",
+            {
+               removeItemButton: true,
+               searchResultLimit: 5,
+               renderChoiceLimit: 5,
+            }
+         )
+
+      })
+
+      function toggleNameInput() {
+         const selectElement = document.getElementById('choices-multiple-remove-button');
+         const nameInput = document.getElementById("name")
+         const selectedOptions = Array.from(selectElement.selectedOptions);
+         const selectedValues = selectedOptions.map(option => option.value);
+         const nameInputContainer = document.getElementById('nameInputContainer');
+         nameInputContainer.style.display = selectedValues.length === 1 ? 'none' : 'block';
+         if (selectedValues.length > 1) {
+            nameInput.setAttribute("required", "true");
+         }
+      }
+   </script>
+   <script>
+      var socket = io('/user-namespace', {
+         auth: {
+            token: '<%= user._id %>'
+         },
+      })
+      socket.on("getOnlineUser", function (data) {
+         $("#" + data.user_id + "_status").addClass("active")
+      })
+
+      socket.on("getOfflineUser", function (data) {
+         $("#" + data.user_id + "_status").removeClass("active")
+      })
+
+      socket.on("loadNewConversation", function (data) {
+         console.log("data: ", data);
+         if (data.members.some(member => member._id == '<%= user._id %>')) {
+            if (data.members.length > 2) {
+               let html = `
+                  <a
+                     class="chat-item d-flex pl-3 pr-0 pt-3 pb-3"
+                     href="/conversation/${data._id}"
+                     id='${data._id}'
+                  >
+                     <div class="w-100">
+                        <div class="d-flex pl-0 h-100">
+                           <div class="mr-3 position-relative group-avatar">
+                              <div class="avatar">
+                                 <img
+                                    src="../images/${data.members[0].profilePicture}"
+                                    alt="User 1"
+                                 />
+                              </div>
+                              <div class="avatar">
+                                 <img
+                                    src="../images/${data.members[1].profilePicture}"
+                                    alt="User 2"
+                                 />
+                              </div>
+                              <div class="avatar">
+                                 <img
+                                    src="../images/${data.members[2].profilePicture}"
+                                    alt="User 3"
+                                 />
+                              </div>
+                           </div>
+                           <div>
+                              <p class="margin-auto fw-400 text-dark-75">
+                                 ${data.name}
+                              </p>
+                              <div
+                                 class="d-flex flex-row mt-1"
+                                 id="last-con-${data._id}"
+                              >
+                                 <span class="fw-400 fs-13 mr-1 u-chat"></span>
+                                 <span
+                                    class="message-shortcut margin-auto fw-400 fs-13 mr-4 last-message"
+                                    ></span
+                                 >
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="flex-shrink-0 margin-auto pl-2 pr-3">
+                        <div class="d-flex flex-column">
+                           <p class="text-muted text-right fs-13 mb-2">08:21</p>
+                           <span class="round badge badge-light-success margin-auto"
+                              >2</span
+                           >
+                        </div>
+                     </div>
+                  </a>
+                  `
+
+               $("#chat-user").prepend(html)
+               $("#chat-user-panel").scrollTop(0)
+            } else {
+               const otherMember =
+                  data.members.filter(member => member._id !=
+                     '<%= user._id %>')
+               let html = `
+            <a
+               class="chat-item d-flex pl-3 pr-0 pt-3 pb-3"
+               href="/conversation/${data._id}"
+               id='${data._id}'
+            >
+               <div class="w-100">
+                  <div class="d-flex pl-0">
+                     <div class="mr-3 position-relative group-avatar">
+                        <img
+                           class="rounded-circle shadow avatar-sm"
+                           src="../images/${otherMember[0].profilePicture}"
+                        />
+                        <div
+                           class="online-indicator"
+                           id="${otherMember[0]._id}_status"
+                        ></div>
+                     </div>
+                     <div>
+                        <p class="margin-auto fw-400 text-dark-75">
+                           ${otherMember[0].username}
+                        </p>
+                        <div
+                                 class="d-flex flex-row mt-1"
+                                 id="last-con-${data._id}"
+                              >
+                                 <span class="fw-400 fs-13 mr-1 u-chat"></span>
+                                 <span
+                                    class="message-shortcut margin-auto fw-400 fs-13 mr-4 last-message"
+                                    ></span
+                                 >
+                              </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="flex-shrink-0 margin-auto pl-2 pr-3">
+                  <div class="d-flex flex-column">
+                     <p class="text-muted text-right fs-13 mb-2">08:21</p>
+                     <span class="round badge badge-light-success margin-auto"
+                        >2</span
+                     >
+                  </div>
+               </div>
+            </a>
+            `
+
+               $("#chat-user").prepend(html)
+               $("#chat-user-panel").scrollTop(0)
+            }
+
+
+         }
+
+      }
+      )
+
+      socket.on("loadNewChat", function(data) {
+         console.log(data);
+         if(data.sender == '<%= user._id %>'){
+            $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
+                     $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+                  } else {
+                     $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
+                     $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+                  }
+      })
+
+      socket.on("loadDeleteConversation", function(data) {
+         var conversationElement = $(`#${data}`)
+         conversationElement.remove()
+      })
+
+      $("#createConvForm").submit(function (event) {
+         event.preventDefault();
+         const selectElement = document.getElementById('choices-multiple-remove-button');
+
+         const selectedOptions = Array.from(selectElement.selectedOptions);
+         const selectedValues = selectedOptions.map(option => option.value);
+         console.log(selectElement);
+         if (selectedValues.length == 0) {
+            alert('Vui lòng chọn ít nhất một giá trị.');
+         } else {
+            let formData = $(this).serialize();
+            console.log(formData);
+            $.ajax({
+               url: "/conversation",
+               type: "POST",
+               data: formData,
+               success: function (data) {
+                  if (data.success) {
+                     socket.emit('newConversation', data.message);
+                     window.location.href = `/conversation/${data.message._id}`;
+                  } else {
+                     window.location.reload();
+                  }
+               }
+            })
+         }
+      })
+
+      function selectUser(index) {
+         document.querySelector('.chat-item.active').classList.remove('active');
+
+         document.querySelectorAll('.chat-item')[index].classList.add('active');
+
+         activeIndex = index;
+      }
+
+      function handleClickDeleteConversation() {
+         const conversationId = $('#exampleModal .modal-content').data("id")
+         $.ajax({
+            url: `conversation/delete/${conversationId}`,
+            type: 'DELETE',
+            success: function (data) {
+               socket.emit('deleteConversation', conversationId)
+               window.location.reload()
+            },
+            error: function (error) {
+               window.location.reload()
+            }
+         });
+      }
+
+      $('#exampleModal').on('show.bs.modal', function (event) {
+
+         var button = $(event.relatedTarget);
+
+         var conversationId = button.data('conversation-id');
+
+         $('#exampleModal .modal-content').attr('data-id', conversationId)
+      });
+
+   </script>
+</body>
+
+</html>
