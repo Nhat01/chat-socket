@@ -131,6 +131,7 @@
      <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.js"></script>
      <script src="https://unpkg.com/@joeattardi/emoji-button@3"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/2.0.2/timeago.min.js"></script>
      <script>
 
         (function ($) {
@@ -573,6 +574,17 @@
             
             emojiButton.addEventListener('click', () => {
                   picker.togglePicker(emojiButton);
+            });
+
+            const timeAgoElements = document.querySelectorAll('.timeago');
+        
+            timeAgoElements.forEach(function (element) {
+                  const createdAt = element.getAttribute('data-created-at');
+                  if(createdAt) {
+
+                     const timeAgoString = timeago().format(new Date(createdAt));
+                     element.textContent = timeAgoString;
+                  }
             });
          });
      </script>

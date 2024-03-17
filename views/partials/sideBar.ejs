@@ -234,11 +234,10 @@
                   </div>
                   <div class="flex-shrink-0 margin-auto pl-2 pr-3">
                      <div class="d-flex flex-column">
-                        <p class="text-muted text-right fs-13 mb-2">08:21</p>
-                        <span
-                           class="round badge badge-light-success margin-auto"
-                           >2</span
-                        >
+                        <p
+                           class="text-muted text-right fs-13 mb-2 timeago"
+                           data-created-at="<%= con.lastMessage?.createdAt %>"
+                        ></p>
                      </div>
                   </div>
                </a>

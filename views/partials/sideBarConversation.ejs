@@ -44,26 +44,6 @@
                   <p class="text-muted">Web Developer</p>
                   <div class="mt-4">
                      <a
-                        href="#"
-                        class="btn btn-light-skype btn-icon btn-circle btn-sm btn-shadow mr-2"
-                        ><i class="bx bxl-skype"></i
-                     ></a>
-                     <a
-                        href="#"
-                        class="btn btn-light-facebook btn-icon btn-circle btn-sm btn-shadow mr-2"
-                        ><i class="bx bxl-facebook"></i
-                     ></a>
-                     <a
-                        href="#"
-                        class="btn btn-light-twitter btn-icon btn-circle btn-sm btn-shadow mr-2"
-                        ><i class="bx bxl-twitter"></i
-                     ></a>
-                     <a
-                        href="#"
-                        class="btn btn-light-instagram btn-icon btn-circle btn-sm btn-shadow mr-2"
-                        ><i class="bx bxl-instagram"></i
-                     ></a>
-                     <a
                         href="/logout"
                         class="btn btn-light-instagram btn-icon btn-circle btn-sm btn-shadow mr-2"
                      >
@@ -83,32 +63,6 @@
                />
             </div>
             <div class="flex-shrink-0 margin-auto">
-               <a
-                  href="#"
-                  class="btn btn-sm btn-icon btn-light active text-dark ml-2"
-               >
-                  <svg
-                     viewBox="0 0 24 24"
-                     width="15"
-                     height="15"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="feather"
-                  >
-                     <rect
-                        x="2"
-                        y="7"
-                        width="20"
-                        height="15"
-                        rx="2"
-                        ry="2"
-                     ></rect>
-                     <polyline points="17 2 12 7 7 2"></polyline>
-                  </svg>
-               </a>
                <button
                   data-toggle="modal"
                   data-target="#exampleModalCenter"
@@ -282,11 +236,10 @@
                   </div>
                   <div class="flex-shrink-0 margin-auto pl-2 pr-3">
                      <div class="d-flex flex-column">
-                        <p class="text-muted text-right fs-13 mb-2">08:21</p>
-                        <span
-                           class="round badge badge-light-success margin-auto"
-                           >2</span
-                        >
+                        <p
+                           class="text-muted text-right fs-13 mb-2 timeago"
+                           data-created-at="<%= con.lastMessage?.createdAt %>"
+                        ></p>
                      </div>
                   </div>
                </a>

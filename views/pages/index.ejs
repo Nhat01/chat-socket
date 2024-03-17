@@ -118,6 +118,8 @@
       integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
       crossorigin="anonymous"></script>
    <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/2.0.2/timeago.min.js"></script>
+
    <script>
 
       (function ($) {
@@ -381,7 +383,18 @@
 
          $('#exampleModal .modal-content').attr('data-id', conversationId)
       });
+      $(document).ready(function () {
+         const timeAgoElements = document.querySelectorAll('.timeago');
+        
+        timeAgoElements.forEach(function (element) {
+            const createdAt = element.getAttribute('data-created-at');
+            if(createdAt) {
 
+               const timeAgoString = timeago().format(new Date(createdAt));
+               element.textContent = timeAgoString;
+            }
+        });
+    });
    </script>
 </body>
 
