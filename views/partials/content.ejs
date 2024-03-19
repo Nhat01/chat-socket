@@ -164,20 +164,27 @@
                            class="wrap-message"
                            id="message-<%= message._id %>"
                         >
-                           <%= message.message %>
+                           <% if(message.image) { %>
+                           <img
+                              src="../fileUploads/<%= message.image %>"
+                              alt="Image"
+                              width="100"
+                           />
+                           <% } else { %> <%= message.message %> <% } %>
                         </div>
                      </div>
                   </div>
                   <div class="message-options dark">
                      <div class="message-time">
-                        <div class="d-flex flex-row">
-                           <div class="">06:49</div>
-                        </div>
-                     </div>
-                     <div class="message-time time-option">
-                        <div class="d-flex flex-row">
+                        <div class="position-relative">
+                           <div>
+                              <%= new
+                              Date(message.createdAt).toLocaleTimeString([],
+                              {hour: '2-digit', minute: '2-digit', hour12: false
+                              }) %>
+                           </div>
                            <div
-                              class="chat-option"
+                              class="trash-message"
                               data-toggle="modal"
                               data-target="#recallMessage"
                               data-message-id="<%= message._id %>"
@@ -192,9 +199,18 @@
             <%} else { %>
             <div class="left-chat-message fs-13 mb-2">
                <p class="mb-0" id="message-<%= message._id %>">
-                  <%= message.message %>
+                  <% if(message.image) { %>
+                  <img
+                     src="../fileUploads/<%= message.image %>"
+                     alt="Image"
+                     width="100"
+                  />
+                  <% } else { %> <%= message.message %> <% } %>
                </p>
-               <div class="message-time">06:15</div>
+               <div class="message-time">
+                  <%= new Date(message.createdAt).toLocaleTimeString([], { hour:
+                  '2-digit', minute: '2-digit', hour12: false }) %>
+               </div>
             </div>
             <%}})}%>
          </div>

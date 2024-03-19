@@ -175,6 +175,7 @@
       socket.on("getOnlineUser", function (data) {
          $("#"+data.user_id + "_status").addClass("active")
       })
+
       socket.on("createRoom", function (data) {
          socket.emit("joinRoom",'<%= conversation._id %>')
       })
@@ -183,8 +184,6 @@
          $("#"+data.user_id + "_status").removeClass("active")
       })
 
-      
-      
       $("#chat-form").submit(function (event) {
          event.preventDefault();
          var message = $("#input-message").val();
@@ -198,6 +197,9 @@
                   $('.emojionearea-editor').html("")
                   $('#last-con-<%= conversation._id %> span:first-child').text("Bạn: ")
                   $('#last-con-<%= conversation._id %> span:last-child').text(message)
+                  $('#conversations').prepend($(`#${data.message.conversationId}`))
+                  const timeAgoString = timeago().format(new Date(data.message.createdAt));
+                  $(`#${data.message.conversationId} .timeago`).text(timeAgoString);
                   if(data.message.sender == '<%= user._id %>'){
                      let html = `
                      <div class="d-flex flex-row-reverse mb-2">
@@ -209,21 +211,21 @@
                            </div>
                            <div class="message-options dark">
                               <div class="message-time">
-                                 <div class="d-flex flex-row">
-                                    <div class="">06:49</div>
+                                 <div class="position-relative">
+                                    <div>
+                                       ${new Date(data.message.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}
+                                    </div>
+                                    <div
+                                       class="trash-message"
+                                       data-toggle="modal"
+                                       data-target="#recallMessage"
+                                       data-message-id=${data._id}
+                                    >
+                                       <i class="las la-trash-alt"></i>
+                                    </div>
                                  </div>
                               </div>
-                              <div class="message-time time-option">
-                        <div class="d-flex flex-row">
-                           <div
-                              class="chat-option"
-                              data-toggle="modal"
-                              data-target="#recallMessage"
-                              data-message-id="${data.message._id}"
-                           >
-                              <i class="las la-trash-alt"></i>
-                           </div>
-                        </div>
+                        
                      </div>
                            </div>
                         </div>
@@ -234,7 +236,7 @@
                      let html = `
                      <div class="left-chat-message fs-13 mb-2">
                         <p class="mb-0">${data.message.message}</p>
-                        <div class="message-time">06:15</div>
+                        <div class="message-time">${new Date(data.message.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}</div>
                         <div class="message-options"></div>
                      </div>
                      `
@@ -247,17 +249,18 @@
             }
          })
       
+         
       })
 
       socket.on("loadNewConversation", function (data){
-         console.log("data: ",data);
          if(data.members.some(member => member._id == '<%= user._id %>')) {
-            console.log("ok: ",data);
             if(data.members.length > 2) {
                let html = `
                   <a
                      class="chat-item d-flex pl-3 pr-0 pt-3 pb-3"
                      href="/conversation/${data._id}"
+                     onclick="clickConversation(${data._id})"
+                     id=${data._id}
                   >
                      <div class="w-100">
                         <div class="d-flex pl-0">
@@ -320,7 +323,9 @@
                let html = `
             <a
                class="chat-item d-flex pl-3 pr-0 pt-3 pb-3"
-               href="/conversation/${data._is}"
+               href="/conversation/${data._id}"
+               onclick="clickConversation(${data._id})"
+               id=${data._id}
             >
                <div class="w-100">
                   <div class="d-flex pl-0">
@@ -372,7 +377,6 @@
       )
 
       socket.on("loadDeleteMessage", (data) => {
-         console.log("ok",data);
          $(`#message-${data.messageId}`).html(data.message)
       })
       
@@ -382,12 +386,10 @@
             
             const selectedOptions = Array.from(selectElement.selectedOptions);
             const selectedValues = selectedOptions.map(option => option.value);
-            console.log(selectElement);
             if (selectedValues.length == 0) {
                alert('Vui lòng chọn ít nhất một giá trị.');
             } else {
                let formData = $(this).serialize();
-               console.log(formData);
                $.ajax({
                url: "/conversation",
                type: "POST",
@@ -405,56 +407,44 @@
          })
 
       socket.on("loadNewChat", function(data) {
-         console.log(data);
          if(data.sender == '<%= user._id %>'){
-                     let html = `
-                     <div class="d-flex flex-row-reverse mb-2">
-                        <div class="right-chat-message fs-13 mb-2">
-                           <div class="mb-0">
-                              <div class="d-flex flex-row">
-                                 <div class="">${data.message}</div>
-                              </div>
-                           </div>
-                           <div class="message-options dark">
-                              <div class="message-time">
-                                 <div class="d-flex flex-row">
-                                    <div class="">06:49</div>
-                                 </div>
-                              </div>
-                              <div class="message-time time-option">
-                        <div class="d-flex flex-row">
-                           <div
-                              class="chat-option"
-                              data-toggle="modal"
-                              data-target="#recallMessage"
-                              data-message-id="${data._id}"
-                           >
-                              <i class="las la-trash-alt"></i>
-                           </div>
-                        </div>
-                     </div>
-                           </div>
-                        </div>
-                     </div>
-                     `
-                     $("#message-container").append(html)
-                     
-                     $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
-                     $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
-                  } else {
-                     let html = `
-                     <div class="left-chat-message fs-13 mb-2">
-                        <p class="mb-0">${data.message}</p>
-                        <div class="message-time">06:15</div>
-                        
-                     </div>
-                     `
-                     $("#message-container").append(html)
-                     $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
-                     $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+            
+            $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
+            if(data.file) {
+               $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
+            } else if(data.image){
+               $(`#last-con-${data.conversationId} span:last-child`).text("hình ảnh")
+            } else {
+               $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+            }
+         } else {
+            $('#conversations').prepend($(`#${data.conversationId}`))
+            const timeAgoString = timeago().format(new Date(data.createdAt));
+            $(`#${data.conversationId} .timeago`).text(timeAgoString);
+            let html = `
+            <div class="left-chat-message fs-13 mb-2">
+               <p class="mb-0">
+                  ${data.image ? 
+                     `<img src="../fileUploads/${data.image}" alt="Image" width="100">` :
+                     `${data.message}`
                   }
-                  var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
-                  $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
+               </p>
+               <div class="message-time">${new Date(data.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}</div>
+               
+            </div>
+            `
+            $("#message-container").append(html)
+            $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
+            if(data.file) {
+               $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
+            } else if(data.image){
+               $(`#last-con-${data.conversationId} span:last-child`).text("hình ảnh")
+            } else {
+               $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+            }
+         }
+         var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
+         $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
       })
       socket.on("loadDeleteConversation", function(data) {
          var conversationElement = $(`#${data}`)
@@ -467,14 +457,14 @@
 
         activeIndex = index;
       }
+      
       function handleClickDeleteConversation(){
          const conversationId = $('#exampleModal .modal-content').data("id")
-         console.log(conversationId);
+        
          $.ajax({
             url: `/conversation/delete/${conversationId}`,
             type: 'DELETE',
             success: function (data) {
-               console.log(data);
                socket.emit('deleteConversation', conversationId)
                   window.location.replace("/")
             },
@@ -486,7 +476,6 @@
 
       function handleClickDeleteMessage(){
          const messageId = $('#recallMessage .modal-content').data("id")
-         console.log(messageId);
          $.ajax({
             url: `/message/delete/${messageId}`,
             type: 'PUT',
@@ -508,6 +497,9 @@
       
       }
 
+      function clickConversation(id) {
+         socket.emit("leaveRoom", '<%= conversation._id %>')
+      }
 
       $('#exampleModal').on('show.bs.modal', function (event) {
 
@@ -560,6 +552,91 @@
                nameInput.setAttribute("required", "true");
             }
          }
+
+         $('#fileInput').change((e) => {
+            let fileInput = e.target;
+            if (fileInput.files.length > 0) {
+               let file = fileInput.files[0];
+               let formData = new FormData();
+               formData.append('file', file);
+               formData.append('conversationId', '<%= conversation._id %>');
+               formData.append('sender', '<%= user._id %>');
+
+               $.ajax({
+                     url: "/message/upload",
+                     type: "POST",
+                     data: formData,
+                     processData: false,
+                     contentType: false,
+                     success: function(data) {
+                        if(data.success){
+                           $('.emojionearea-editor').html("")
+                           $('#last-con-<%= conversation._id %> span:first-child').text("Bạn: ")
+                           if(data.message.file) {
+                              $('#last-con-<%= conversation._id %> span:last-child').text("file đính kèm")
+                           } else{
+                              $('#last-con-<%= conversation._id %> span:last-child').text("hình ảnh")
+                           }
+                           if(data.message.sender == '<%= user._id %>'){
+                              let html = `
+                              <div class="d-flex flex-row-reverse mb-2">
+                                 <div class="right-chat-message fs-13 mb-2">
+                                    <div class="mb-0">
+                                       <div class="d-flex flex-row">
+                                          ${data.message.image ? 
+                                             `<img src="../fileUploads/${data.message.image}" alt="Image" width="100">`:
+                                             `<div class="">${data.message.message}</div>`
+                                             
+                                          }
+                                       </div>
+                                    </div>
+                                    <div class="message-options dark">
+                                       <div class="message-time">
+                                          <div class="d-flex flex-row">
+                                             <div class="">06:49</div>
+                                          </div>
+                                       </div>
+                                       <div class="message-time time-option">
+                                 <div class="d-flex flex-row">
+                                    <div
+                                       class="chat-option"
+                                       data-toggle="modal"
+                                       data-target="#recallMessage"
+                                       data-message-id="${data.message._id}"
+                                    >
+                                       <i class="las la-trash-alt"></i>
+                                    </div>
+                                 </div>
+                              </div>
+                                    </div>
+                                 </div>
+                              </div>
+                              `
+                              $("#message-container").append(html)
+                           } else {
+                              let html = `
+                              <div class="left-chat-message fs-13 mb-2">
+                                 <p class="mb-0">${data.message.image ? 
+                                             `<img src="../fileUploads/${data.message.image}" alt="Image" width="100">`:
+                                             `${data.message.message}`
+                                          }</p>
+                                 <div class="message-time">06:15</div>
+                                 <div class="message-options"></div>
+                              </div>
+                              `
+                              $("#message-container").append(html)
+                           }
+                        }
+                        var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
+                        $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
+                        socket.emit("newChat", data.message)
+                     },
+                     error: function(xhr, status, error) {
+                        console.error(error);
+                     }
+               });
+            }
+         })
 
          $(document).ready(function() {
            

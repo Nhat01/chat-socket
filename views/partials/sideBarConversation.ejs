@@ -140,8 +140,13 @@
             <% if(conversations.length> 0) { conversations.forEach((con,i) => {
             let lastMessage = con.lastMessage.message; if(lastMessage?.length >
             10) { lastMessage = lastMessage.substr(0,10)+"..." } %>
-            <div class="position-relative conversation-container">
+            <div
+               class="position-relative conversation-container"
+               id="conversations"
+            >
                <a
+                  id="<%= con._id %>"
+                  onclick="clickConversation('<%= con._id %>')"
                   class="chat-item <%= conversation._id.equals(con._id) ? 'active' : '' %> d-flex pl-3 pr-0 pt-3 pb-3"
                   href="/conversation/<%= con._id %>"
                >

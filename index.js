@@ -15,6 +15,7 @@ const io = require("socket.io")(server);
 
 dotenv.config();
 
+//Sử dụng session (để lưu thông tin user)
 app.use(
    session({
       secret: process.env.SECRET_SESSION,
@@ -23,6 +24,7 @@ app.use(
    })
 );
 
+//dùng ejs
 app.set("view engine", "ejs");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,6 +43,7 @@ connectDB();
 
 app.get("/", isLogin, async function (req, res) {
    try {
+      //lấy danh sách user và các cuộc trò chuyện
       const users = await User.find({ _id: { $nin: [req.session.user._id] } });
       const conversations = await Conversation.find({
          members: { $in: [req.session.user._id] },
@@ -66,40 +69,54 @@ app.get("/", isLogin, async function (req, res) {
    }
 });
 
+//socket.io
 const unp = io.of("/user-namespace");
 
 unp.on("connection", async (socket) => {
    console.log("a user connected");
 
+   //khi user connect thì set isOnline = '1'
    const userId = socket.handshake.auth.token;
    await User.findByIdAndUpdate({ _id: userId }, { $set: { isOnline: "1" } });
 
+   //bắn sự kiện để các client biết user đang online
    socket.broadcast.emit("getOnlineUser", { user_id: userId });
 
+   //bắn sự kiện tạo phòng khi các client chọn 1 cuộc trò chuyện
    socket.emit("createRoom");
 
    socket.on("disconnect", async () => {
+      //khi disconnect thì set isOnline = '0'
       await User.findByIdAndUpdate(
          { _id: userId },
          { $set: { isOnline: "0" } }
       );
+      //bắn sự kiện để các client biết user offline
       socket.broadcast.emit("getOfflineUser", { user_id: userId });
       console.log("user disconnected");
    });
 
+   //lắng nghe sự kiện khi người dùng nhắn tin
    socket.on("newChat", async (data) => {
       socket.broadcast.emit("loadNewChat", data);
    });
 
+   //lắng nghe sự kiện khi client chọn 1 cuộc trò chuyện thì tham gia vào room riêng theo conversationID
    socket.on("joinRoom", async (data) => {
       console.log("join ", data);
       socket.join(data);
+   });
+
+   socket.on("leaveRoom", async (data) => {
+      console.log("leave ", data);
+      socket.leave(data);
    });
 
    socket.on("newConversation", (data) => {
       socket.broadcast.emit("loadNewConversation", data);
    });
 
+   //lắng nghe sự kiện khi người dùng thu hồi tin nhắn
    socket.on("recallMessage", (data) => {
       console.log(data);
       socket.broadcast.emit("loadDeleteMessage", data);
@@ -112,6 +129,7 @@ unp.on("connection", async (socket) => {
 });
 
 app.use("/", userRoute);
+//dùng middleware isLogin để đảm bảo người dùng đã đăng nhập
 app.use("/conversation", isLogin, conversationRoute);
 app.use("/message", isLogin, messageRoute);
 

@@ -157,8 +157,10 @@
                renderChoiceLimit: 5,
             }
          )
-
+         
+         
       })
+      
 
       function toggleNameInput() {
          const selectElement = document.getElementById('choices-multiple-remove-button');
@@ -187,7 +189,6 @@
       })
 
       socket.on("loadNewConversation", function (data) {
-         console.log("data: ", data);
          if (data.members.some(member => member._id == '<%= user._id %>')) {
             if (data.members.length > 2) {
                let html = `
@@ -309,14 +310,28 @@
       )
 
       socket.on("loadNewChat", function(data) {
-         console.log(data);
          if(data.sender == '<%= user._id %>'){
             $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
-                     $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
-                  } else {
-                     $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
-                     $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
-                  }
+            if(data.file) {
+               $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
+            } else if(data.image){
+               $(`#last-con-${data.conversationId} span:last-child`).text("hình ảnh")
+            } else {
+               $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+            }
+         } else {
+            $('#conversations').prepend($(`#${data.conversationId}`))
+            const timeAgoString = timeago().format(new Date(data.createdAt));
+            $(`#${data.conversationId} .timeago`).text(timeAgoString);
+            $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
+            if(data.file) {
+               $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
+            } else if(data.image){
+               $(`#last-con-${data.conversationId} span:last-child`).text("hình ảnh")
+            } else {
+               $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
+            }
+         }
       })
 
       socket.on("loadDeleteConversation", function(data) {
@@ -330,12 +345,10 @@
 
          const selectedOptions = Array.from(selectElement.selectedOptions);
          const selectedValues = selectedOptions.map(option => option.value);
-         console.log(selectElement);
          if (selectedValues.length == 0) {
             alert('Vui lòng chọn ít nhất một giá trị.');
          } else {
             let formData = $(this).serialize();
-            console.log(formData);
             $.ajax({
                url: "/conversation",
                type: "POST",

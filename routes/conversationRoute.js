@@ -94,6 +94,8 @@ router.get("/:id", async (req, res) => {
       const messages = await Message.find({
          conversationId: req.params.id,
          isRecalled: false,
+      }).sort({
+         createdAt: "asc",
       });
       res.render("pages/conversation", {
          user: req.session.user,

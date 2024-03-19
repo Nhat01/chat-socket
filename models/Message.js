@@ -16,6 +16,12 @@ const MessageSchema = new mongoose.Schema(
          type: Boolean,
          default: false, // Mặc định là false, tức là tin nhắn chưa được thu hồi
       },
+      file: {
+         type: String,
+      },
+      image: {
+         type: String,
+      },
    },
    { timestamps: true }
 );

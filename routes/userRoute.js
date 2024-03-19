@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
-const upload = require("../upload");
+const { upload } = require("../upload");
 const { isLogout } = require("../middleware/auth");
 
 router.get("/login", isLogout, function (req, res) {

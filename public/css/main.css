@@ -503,7 +503,7 @@ img.shadow {
   position: absolute;
   bottom: 50%;
   transform: translateY(50%) scale(0);
-  padding: 2px 6px;
+  padding: 4px 6px;
   font-size: 11px;
   color: #6c757d;
   cursor: pointer;
@@ -625,7 +625,7 @@ img.shadow {
 .chat.chat-panel .right-chat-message:hover .message-time {
   -webkit-transition: all .25s ease 0s;
   transition: all .25s ease 0s;
-  left: -42px;
+  left: -38px;
   background-color: #ccc;
     line-height: 15px;
     border-radius: 5px;
@@ -972,4 +972,17 @@ img.shadow {
   padding-left: unset !important;
   padding-right:unset !important;
 height: calc((var(--emoji-size)* var(--emoji-size-multiplier))* var(--row-count) + var(--category-name-size) + -8px) !important;
+}
+
+.trash-message {
+  position: absolute;
+  top: 0;
+  left: -19px;
+  border-radius: 3px;
+  background-color: red;
+}
+
+.trash-message i{
+  width: 12px;
+  height: 12px
 }
