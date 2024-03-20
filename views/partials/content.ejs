@@ -170,6 +170,14 @@
                               alt="Image"
                               width="100"
                            />
+                           <% } else if (message.file) { %>
+                           <i class="bi bi-file-earmark-text"></i>
+                           <a
+                              class="file-download"
+                              href="../fileUploads/<%= message.file %>"
+                              download
+                              ><%= message.message %></a
+                           >
                            <% } else { %> <%= message.message %> <% } %>
                         </div>
                      </div>
@@ -205,6 +213,14 @@
                      alt="Image"
                      width="100"
                   />
+                  <% } else if (message.file) { %>
+                  <i class="bi bi-file-earmark-text"></i>
+                  <a
+                     class="file-download"
+                     href="../fileUploads/<%= message.file %>"
+                     download
+                     ><%= message.message %></a
+                  >
                   <% } else { %> <%= message.message %> <% } %>
                </p>
                <div class="message-time">
@@ -235,36 +251,11 @@
                   <i
                      class="chat-upload-trigger fs-19 bi bi-file-earmark-plus ml-2 mr-2"
                   ></i>
-                  <i class="fs-19 bi bi-camera ml-2 mr-2"></i>
                   <button class="btn-unset" type="submit">
                      <i class="fs-19 bi bi-cursor ml-2 mr-2"></i>
                   </button>
                   <div class="chat-upload">
                      <div class="d-flex flex-column">
-                        <div class="p-2">
-                           <button
-                              type="button"
-                              class="btn btn-secondary btn-md btn-icon btn-circle btn-blushing"
-                           >
-                              <i class="fs-15 bi bi-camera"></i>
-                           </button>
-                        </div>
-                        <div class="p-2">
-                           <button
-                              type="button"
-                              class="btn btn-success btn-md btn-icon btn-circle btn-blushing"
-                           >
-                              <i class="fs-15 bi bi-file-earmark-plus"></i>
-                           </button>
-                        </div>
-                        <div class="p-2">
-                           <button
-                              type="button"
-                              class="btn btn-warning btn-md btn-icon btn-circle btn-blushing"
-                           >
-                              <i class="fs-15 bi bi-person"></i>
-                           </button>
-                        </div>
                         <div class="p-2">
                            <label
                               for="fileInput"

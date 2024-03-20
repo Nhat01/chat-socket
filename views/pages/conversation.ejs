@@ -206,7 +206,12 @@
                         <div class="right-chat-message fs-13 mb-2">
                            <div class="mb-0">
                               <div class="d-flex flex-row">
-                                 <div class="">${data.message.message}</div>
+                                 <div
+                                    class="wrap-message"
+                                    id="message-${data.message._id}"
+                                 >
+                                    ${data.message.message}
+                                 </div>
                               </div>
                            </div>
                            <div class="message-options dark">
@@ -219,14 +224,12 @@
                                        class="trash-message"
                                        data-toggle="modal"
                                        data-target="#recallMessage"
-                                       data-message-id=${data._id}
+                                       data-message-id=${data.message._id}
                                     >
                                        <i class="las la-trash-alt"></i>
                                     </div>
                                  </div>
                               </div>
-                        
-                     </div>
                            </div>
                         </div>
                      </div>
@@ -237,7 +240,7 @@
                      <div class="left-chat-message fs-13 mb-2">
                         <p class="mb-0">${data.message.message}</p>
                         <div class="message-time">${new Date(data.message.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}</div>
-                        <div class="message-options"></div>
+                        
                      </div>
                      `
                      $("#message-container").append(html)
@@ -408,7 +411,6 @@
 
       socket.on("loadNewChat", function(data) {
          if(data.sender == '<%= user._id %>'){
-            
             $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
             if(data.file) {
                $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
@@ -426,6 +428,7 @@
                <p class="mb-0">
                   ${data.image ? 
                      `<img src="../fileUploads/${data.image}" alt="Image" width="100">` :
+                     data.file ? `<i class="bi bi-file-earmark-text"></i> <a class='file-download' href="../fileUploads/${data.file}<" download>${data.message}</a>`:
                      `${data.message}`
                   }
                </p>
@@ -459,7 +462,7 @@
       }
       
       function handleClickDeleteConversation(){
-         const conversationId = $('#exampleModal .modal-content').data("id")
+         const conversationId = $('#exampleModal .modal-content').data("dataId")
         
          $.ajax({
             url: `/conversation/delete/${conversationId}`,
@@ -475,12 +478,15 @@
       }
 
       function handleClickDeleteMessage(){
-         const messageId = $('#recallMessage .modal-content').data("id")
+         const messageId = $('#recallMessage .modal-content').data("dataMessageId")
+         console.log($('#recallMessage .modal-content'));
+         console.log('message-id:', messageId);
          $.ajax({
             url: `/message/delete/${messageId}`,
             type: 'PUT',
             success: function (data) {
                if(data.success) {
+                  console.log($(`#message-${messageId}`));
                   $(`#message-${messageId}`).html(data.message)
                   $('#recallMessage').modal('hide');
                   let data_message = {
@@ -507,16 +513,17 @@
 
          var conversationId = button.data('conversation-id');
 
-         $('#exampleModal .modal-content').attr('data-id', conversationId)
+         $('#exampleModal .modal-content').data('data-id', conversationId)
       });
 
       $('#recallMessage').on('show.bs.modal', function (event) {
 
          var button = $(event.relatedTarget);
 
-         var conversationId = button.data('message-id');
+         var messageId = button.data('message-id');
+         console.log('data-message-id:', messageId);
 
-         $('#recallMessage .modal-content').attr('data-id', conversationId)
+         $('#recallMessage .modal-content').data('data-message-id', messageId)
       });
 
       
@@ -583,31 +590,35 @@
                                  <div class="right-chat-message fs-13 mb-2">
                                     <div class="mb-0">
                                        <div class="d-flex flex-row">
-                                          ${data.message.image ? 
-                                             `<img src="../fileUploads/${data.message.image}" alt="Image" width="100">`:
-                                             `<div class="">${data.message.message}</div>`
-                                             
-                                          }
+                                          <div
+                                             class="wrap-message"
+                                             id="message-${data.message._id}"
+                                          >
+                                             ${data.message.image ? 
+                                                `<img src="../fileUploads/${data.message.image}" alt="Image" width="100">`:
+                                                data.message.file ? `<i class="bi bi-file-earmark-text"></i> <a class='file-download' href="../fileUploads/${data.message.file}<" download>${data.message.message}</a>`:
+                                                `${data.message.message}`
+                                             }
+                                          </div>
+                                          
                                        </div>
                                     </div>
                                     <div class="message-options dark">
                                        <div class="message-time">
-                                          <div class="d-flex flex-row">
-                                             <div class="">06:49</div>
+                                          <div class="position-relative">
+                                             <div>
+                                                ${new Date(data.message.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}
+                                             </div>
+                                             <div
+                                                class="trash-message"
+                                                data-toggle="modal"
+                                                data-target="#recallMessage"
+                                                data-message-id=${data.message._id}
+                                             >
+                                                <i class="las la-trash-alt"></i>
+                                             </div>
                                           </div>
                                        </div>
-                                       <div class="message-time time-option">
-                                 <div class="d-flex flex-row">
-                                    <div
-                                       class="chat-option"
-                                       data-toggle="modal"
-                                       data-target="#recallMessage"
-                                       data-message-id="${data.message._id}"
-                                    >
-                                       <i class="las la-trash-alt"></i>
-                                    </div>
-                                 </div>
-                              </div>
                                     </div>
                                  </div>
                               </div>
@@ -616,12 +627,9 @@
                            } else {
                               let html = `
                               <div class="left-chat-message fs-13 mb-2">
-                                 <p class="mb-0">${data.message.image ? 
-                                             `<img src="../fileUploads/${data.message.image}" alt="Image" width="100">`:
-                                             `${data.message.message}`
-                                          }</p>
-                                 <div class="message-time">06:15</div>
-                                 <div class="message-options"></div>
+                                 <p class="mb-0">${data.message.image ? `<img src="../fileUploads/${data.message.image}" alt="Image" width="100">`: data.message.file ? `<i class="bi bi-file-earmark-text"></i> <a class='file-download' href="../fileUploads/${data.message.file}<" download>${data.message.message}</a>`:
+                                                `${data.message.message}`}</p>
+                                 <div class="message-time">${new Date(data.message.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}</div>
                               </div>
                               `
                               $("#message-container").append(html)
@@ -629,6 +637,7 @@
                         }
                         var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
                         $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
+                        $(".chat-upload-trigger").parent().find(".chat-upload").removeClass("active");
                         socket.emit("newChat", data.message)
                      },
                      error: function(xhr, status, error) {

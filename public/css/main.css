@@ -986,3 +986,17 @@ height: calc((var(--emoji-size)* var(--emoji-size-multiplier))* var(--row-count)
   width: 12px;
   height: 12px
 }
+
+.message-time::before{
+  content: " ";
+  top: 2px;
+  right: -6px;
+  width: 58px;
+  height: 19px;
+  position: absolute;
+}
+
+.right-chat-message .file-download{
+  text-decoration: none;
+  color:white;
+}
