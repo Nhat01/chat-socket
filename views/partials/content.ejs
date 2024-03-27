@@ -5,6 +5,8 @@
             <div class="w-100 d-flex pl-0">
                <% if(conversation.members.length > 2) { const otherMember =
                conversation.members.filter(member => member._id != user._id) %>
+               <% const onlineMember = conversation.members.find(member =>
+               member.isOnline == 1); %>
                <div class="mr-3 position-relative group-avatar-content">
                   <div class="avatar">
                      <img
@@ -18,12 +20,9 @@
                         alt="User 2"
                      />
                   </div>
-                  <div class="avatar">
-                     <img
-                        src="../images/<%= conversation.members[2].profilePicture %>"
-                        alt="User 3"
-                     />
-                  </div>
+                  <div
+                     class="online-indicator <%= onlineMember?.isOnline == 1 ? 'active' : '' %>"
+                  ></div>
                </div>
                <div class="mr-3">
                   <a href="!#">
@@ -32,15 +31,23 @@
                      </p>
                   </a>
                   <p class="sub-caption text-muted text-small mb-0">
-                     <i class="la la-clock mr-1"></i>last seen today at 09:15 PM
+                     <i class="la la-clock mr-1"></i>
+                     <span id="last_seen">last seen today at 09:15 PM</span>
                   </p>
                </div>
                <% } else { const otherMember =
                conversation.members.filter(member => member._id != user._id)%>
-               <img
-                  class="rounded-circle shadow avatar-sm mr-3 chat-profile-picture"
-                  src="../images/<%= otherMember[0].profilePicture %>"
-               />
+
+               <div class="mr-3 position-relative group-avatar">
+                  <img
+                     class="rounded-circle shadow avatar-sm chat-profile-picture"
+                     src="../images/<%= otherMember[0].profilePicture %>"
+                  />
+                  <div
+                     class="online-indicator <%= otherMember[0].isOnline == 1 ? 'active' : '' %>"
+                     id="<%= otherMember[0]._id %>_status"
+                  ></div>
+               </div>
                <div class="mr-3">
                   <a href="!#">
                      <p class="fw-400 mb-0 text-dark-75">
@@ -48,97 +55,11 @@
                      </p>
                   </a>
                   <p class="sub-caption text-muted text-small mb-0">
-                     <i class="la la-clock mr-1"></i>last seen today at 09:15 PM
+                     <i class="la la-clock mr-1"></i>
+                     <span id="last_seen">last seen today at 09:15 PM</span>
                   </p>
                </div>
                <% } %>
-            </div>
-            <div class="flex-shrink-0 margin-auto">
-               <a
-                  href="#"
-                  class="btn btn-sm btn-icon btn-light active text-dark ml-2"
-               >
-                  <svg
-                     viewBox="0 0 24 24"
-                     width="15"
-                     height="15"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="feather"
-                  >
-                     <circle cx="12" cy="12" r="10"></circle>
-                     <line x1="12" y1="16" x2="12" y2="12"></line>
-                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-               </a>
-               <a
-                  href="#"
-                  class="btn btn-sm btn-icon btn-light active text-dark ml-2"
-               >
-                  <svg
-                     viewBox="0 0 24 24"
-                     width="15"
-                     height="15"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="feather"
-                  >
-                     <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                     <rect
-                        x="1"
-                        y="5"
-                        width="15"
-                        height="14"
-                        rx="2"
-                        ry="2"
-                     ></rect>
-                  </svg>
-               </a>
-               <a
-                  href="#"
-                  class="btn btn-sm btn-icon btn-light active text-dark ml-2"
-               >
-                  <svg
-                     viewBox="0 0 24 24"
-                     width="15"
-                     height="15"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="feather"
-                  >
-                     <circle cx="11" cy="11" r="8"></circle>
-                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-               </a>
-               <a
-                  href="#"
-                  class="btn btn-sm btn-icon btn-light active text-dark ml-2"
-               >
-                  <svg
-                     viewBox="0 0 24 24"
-                     width="15"
-                     height="15"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="feather"
-                  >
-                     <circle cx="12" cy="12" r="1"></circle>
-                     <circle cx="12" cy="5" r="1"></circle>
-                     <circle cx="12" cy="19" r="1"></circle>
-                  </svg>
-               </a>
             </div>
          </div>
       </div>
@@ -157,7 +78,7 @@
             <% if(messages.length > 0) { messages.forEach(function(message) {
             if(message.sender == user._id) { %>
             <div class="d-flex flex-row-reverse mb-2">
-               <div class="right-chat-message fs-13 mb-2">
+               <div class="right-chat-message fs-13">
                   <div class="mb-0">
                      <div class="d-flex flex-row">
                         <div
@@ -204,6 +125,7 @@
                   </div>
                </div>
             </div>
+
             <%} else { %>
             <div class="left-chat-message fs-13 mb-2">
                <p class="mb-0" id="message-<%= message._id %>">
@@ -229,6 +151,10 @@
                </div>
             </div>
             <%}})}%>
+
+            <div class="left-chat-message fs-13 mb-2" id="wrap-loader">
+               <div class="loader"></div>
+            </div>
          </div>
       </div>
       <form

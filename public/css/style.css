@@ -50,6 +50,10 @@ display-flex, .display-flex, .display-flex-center, .signup-content, .signin-cont
   
   .main {
     background: #f8f8f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
      }
   
   .clear {
@@ -78,8 +82,7 @@ display-flex, .display-flex, .display-flex-center, .signup-content, .signin-cont
   margin-bottom: 10px;
   color: red;
 }
-  .signup {
-    margin-bottom: 150px; }
+  .signup { }
   
   .signup-content {
     padding: 75px 0; }

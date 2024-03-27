@@ -85,26 +85,6 @@
                      ></path>
                   </svg>
                </button>
-               <a
-                  href="#"
-                  class="btn btn-sm btn-icon btn-light active text-dark ml-2"
-               >
-                  <svg
-                     viewBox="0 0 24 24"
-                     width="15"
-                     height="15"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="feather"
-                  >
-                     <circle cx="12" cy="12" r="1"></circle>
-                     <circle cx="12" cy="5" r="1"></circle>
-                     <circle cx="12" cy="19" r="1"></circle>
-                  </svg>
-               </a>
             </div>
          </div>
       </div>
@@ -151,8 +131,9 @@
                   href="/conversation/<%= con._id %>"
                >
                   <div class="w-100">
-                     <div class="d-flex pl-0 h-100">
-                        <% if(con.members.length> 2) { %>
+                     <div class="d-flex pl-0 wrap-avatar">
+                        <% if(con.members.length > 2) { %> <% const onlineMember
+                        = con.members.find(member => member.isOnline == 1); %>
                         <div class="mr-3 position-relative group-avatar">
                            <div class="avatar">
                               <img
@@ -166,12 +147,9 @@
                                  alt="User 2"
                               />
                            </div>
-                           <div class="avatar">
-                              <img
-                                 src="../images/<%= con.members[2].profilePicture %>"
-                                 alt="User 3"
-                              />
-                           </div>
+                           <div
+                              class="online-indicator <%= onlineMember?.isOnline == 1 ? 'active' : '' %>"
+                           ></div>
                         </div>
                         <div>
                            <p class="margin-auto fw-400 text-dark-75">

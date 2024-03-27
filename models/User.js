@@ -24,6 +24,9 @@ const UserSchema = new mongoose.Schema(
          type: String,
          default: "0",
       },
+      lastSeen: {
+         type: Date,
+      },
    },
    { timestamps: true }
 );

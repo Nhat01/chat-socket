@@ -173,16 +173,64 @@
 
 
       socket.on("getOnlineUser", function (data) {
-         $("#"+data.user_id + "_status").addClass("active")
+         $("#" + data.user_id + "_status").addClass("active")
+         if (data.groupConversations && data.groupConversations.length > 0) {
+            data.groupConversations.forEach(conversation => {
+               // Kiểm tra xem trong cuộc trò chuyện có ít nhất một người dùng online không
+               const hasOnlineMember = conversation.members.some(member => member.isOnline == 1);
+               
+               // Nếu có ít nhất một người dùng online, thêm lớp "active" vào phần tử status của cuộc trò chuyện
+               if (hasOnlineMember) {
+                  $(`#${conversation._id} .online-indicator`).addClass('active')
+               }
+            });
+         }
       })
+
+      socket.on("getOfflineUser", function (data) {
+         $("#" + data.user_id + "_status").removeClass("active")
+         data.groupConversations.forEach(conversation => {
+            // Kiểm tra xem tất cả các thành viên của cuộc trò chuyện đều offline không
+            const allMembersOffline = conversation.members.every(member => member.isOnline === 0);
+            // Nếu tất cả thành viên đều offline, loại bỏ lớp "active" khỏi phần tử status của cuộc trò chuyện
+            if (allMembersOffline) {
+               $(`#${conversation._id} .online-indicator`).removeClass('active')
+            }
+         });
+      })
+
+      // Lắng nghe sự kiện input trên ô nhập tin nhắn
+      $('#input-message').on('input', function() {
+         const isTyping = $(this).val().trim().length > 0; // Kiểm tra xem có đang gõ tin nhắn không
+         
+         // Gửi thông điệp đến server báo hiệu người dùng đang gõ tin nhắn
+         socket.emit('typing', { isTyping: isTyping, conversationId: '<%= conversation._id %>' });
+      });
+
+      $('#input-message').on('blur', function() {
+         // Gửi thông điệp đến server báo hiệu người dùng không còn gõ tin nhắn nữa
+         socket.emit('typing', { isTyping: false, conversationId: '<%= conversation._id %>' });
+      });
+
+      socket.on('typingNotification', function(data) {
+         if (data.isTyping) {
+            // Hiển thị thông báo khi người dùng đang gõ tin nhắn
+            $('#message-container').append($('#wrap-loader'))
+            $('#wrap-loader').addClass('active')
+            var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
+               $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
+         } else {
+            // Xóa thông báo khi không có người dùng nào đang gõ tin nhắn
+            $('#wrap-loader').removeClass('active')
+            var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
+               $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
+         }
+      });
 
       socket.on("createRoom", function (data) {
          socket.emit("joinRoom",'<%= conversation._id %>')
       })
       
-      socket.on("getOfflineUser", function (data) {
-         $("#"+data.user_id + "_status").removeClass("active")
-      })
 
       $("#chat-form").submit(function (event) {
          event.preventDefault();
@@ -193,6 +241,7 @@
             data: {conversationId: '<%= conversation._id %>',sender: '<%= user._id %>', message: message},
             success: function(data) {
                if(data.success){
+                  
                   $("#input-message").val('')
                   $('.emojionearea-editor').html("")
                   $('#last-con-<%= conversation._id %> span:first-child').text("Bạn: ")
@@ -238,7 +287,7 @@
                   } else {
                      let html = `
                      <div class="left-chat-message fs-13 mb-2">
-                        <p class="mb-0">${data.message.message}</p>
+                        <p class="mb-0" id="message-${data.message._id}">${data.message.message}</p>
                         <div class="message-time">${new Date(data.message.createdAt).toLocaleTimeString([],{hour: '2-digit', minute: '2-digit', hour12: false})}</div>
                         
                      </div>
@@ -249,6 +298,7 @@
                var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
                $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
                socket.emit("newChat", data.message)
+               
             }
          })
       
@@ -331,7 +381,7 @@
                id=${data._id}
             >
                <div class="w-100">
-                  <div class="d-flex pl-0">
+                  <div class="d-flex pl-0 wrap-avatar">
                      <div class="mr-3 position-relative group-avatar">
                         <img
                            class="rounded-circle shadow avatar-sm"
@@ -380,6 +430,7 @@
       )
 
       socket.on("loadDeleteMessage", (data) => {
+         console.log(data);
          $(`#message-${data.messageId}`).html(data.message)
       })
       
@@ -408,24 +459,18 @@
                })
             }
          })
+      
 
       socket.on("loadNewChat", function(data) {
          if(data.sender == '<%= user._id %>'){
-            $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
-            if(data.file) {
-               $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
-            } else if(data.image){
-               $(`#last-con-${data.conversationId} span:last-child`).text("hình ảnh")
-            } else {
-               $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
-            }
+            
          } else {
             $('#conversations').prepend($(`#${data.conversationId}`))
             const timeAgoString = timeago().format(new Date(data.createdAt));
             $(`#${data.conversationId} .timeago`).text(timeAgoString);
             let html = `
             <div class="left-chat-message fs-13 mb-2">
-               <p class="mb-0">
+               <p class="mb-0" id="message-${data._id}">
                   ${data.image ? 
                      `<img src="../fileUploads/${data.image}" alt="Image" width="100">` :
                      data.file ? `<i class="bi bi-file-earmark-text"></i> <a class='file-download' href="../fileUploads/${data.file}<" download>${data.message}</a>`:
@@ -437,6 +482,15 @@
             </div>
             `
             $("#message-container").append(html)
+         }
+         var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
+         $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
+         $('#message-container').append($('#wrap-loader'))
+      })
+
+      socket.on("loadLatestChat", function(data) {
+         $('#conversations').prepend($(`#${data.conversationId}`))
+            const timeAgoString = timeago().format(new Date(data.createdAt));
             $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
             if(data.file) {
                $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
@@ -445,10 +499,8 @@
             } else {
                $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
             }
-         }
-         var chatPanel = $(".scrollable-chat-panel").perfectScrollbar();
-         $(".scrollable-chat-panel").scrollTop(chatPanel.prop("scrollHeight"));
       })
+      
       socket.on("loadDeleteConversation", function(data) {
          var conversationElement = $(`#${data}`)
          conversationElement.remove()
@@ -490,6 +542,7 @@
                   $(`#message-${messageId}`).html(data.message)
                   $('#recallMessage').modal('hide');
                   let data_message = {
+                     conversationId: data.conversationId,
                      messageId: messageId,
                      message: data.message
                   }
@@ -527,16 +580,27 @@
       });
 
       
-      $(document).ready(function () {
-            var multipleCancelButton = new Choices(
-               "#choices-multiple-remove-button",
-               {
-                  removeItemButton: true,
-                  searchResultLimit: 5,
-                  renderChoiceLimit: 5,
-               }
-            );
-      });
+      var multipleCancelButton = new Choices(
+            "#choices-multiple-remove-button",
+            {
+               removeItemButton: true,
+               searchResultLimit: 5,
+               renderChoiceLimit: 5,
+            }
+         )
+
+      function toggleNameInput() {
+         const selectElement = document.getElementById('choices-multiple-remove-button');
+         const nameInput = document.getElementById("name")
+         const selectedOptions = Array.from(selectElement.selectedOptions);
+         const selectedValues = selectedOptions.map(option => option.value);
+         const nameInputContainer = document.getElementById('nameInputContainer');
+         nameInputContainer.style.display = selectedValues.length > 1 ? 'block' : 'none';
+         multipleCancelButton.hideDropdown()
+         if (selectedValues.length > 1) {
+            nameInput.setAttribute("required", "true");
+         }
+      }
          function handleSubmit(event) {
             const selectElement = document.getElementById('choices-multiple-remove-button');
             
@@ -548,17 +612,7 @@
                event.preventDefault(); 
             }
          }
-         function toggleNameInput() {
-            const selectElement = document.getElementById('choices-multiple-remove-button');
-            const nameInput = document.getElementById("name")
-            const selectedOptions = Array.from(selectElement.selectedOptions);
-            const selectedValues = selectedOptions.map(option => option.value);
-            const nameInputContainer = document.getElementById('nameInputContainer');
-            nameInputContainer.style.display = selectedValues.length === 1 ? 'none' : 'block';
-            if (selectedValues.length > 1) {
-               nameInput.setAttribute("required", "true");
-            }
-         }
+         
 
          $('#fileInput').change((e) => {
             let fileInput = e.target;
@@ -671,6 +725,19 @@
                      const timeAgoString = timeago().format(new Date(createdAt));
                      element.textContent = timeAgoString;
                   }
+            });
+         });
+         document.querySelector('.form-control').addEventListener('input', function(event) {
+            const keyword = event.target.value.trim(); // Lấy từ khóa tìm kiếm, loại bỏ khoảng trắng ở đầu và cuối
+            const conversations = document.querySelectorAll('.conversation-container');
+            
+            conversations.forEach(conversation => {
+               const conversationName = conversation.querySelector('.fw-400.text-dark-75').innerText;
+               if (conversationName.toLowerCase().includes(keyword.toLowerCase())) {
+                     conversation.style.display = 'block'; // Hiển thị cuộc trò chuyện nếu tên chứa từ khóa
+               } else {
+                     conversation.style.display = 'none'; // Ẩn cuộc trò chuyện nếu tên không chứa từ khóa
+               }
             });
          });
      </script>

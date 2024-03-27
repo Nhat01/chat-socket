@@ -108,6 +108,7 @@ router.put("/delete/:id", async (req, res) => {
       await message.save();
       res.status(200).send({
          success: true,
+         conversationId: message.conversationId,
          message: "Tin nhắn đã bị thu hồi",
       });
    } catch (error) {

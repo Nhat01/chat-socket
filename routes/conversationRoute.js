@@ -39,7 +39,10 @@ router.post("/", async (req, res) => {
       }
    } else {
       const existConversation = await Conversation.findOne({
-         members: { $all: [req.body.selectOptions, req.body.user_id] },
+         $and: [
+            { members: { $all: [req.body.selectOptions, req.body.user_id] } }, // Tìm các cuộc trò chuyện mà user_id là một trong các thành viên
+            { members: { $size: 2 } }, // Kiểm tra xem số lượng thành viên không phải là 2
+         ],
       });
       console.log(existConversation);
       if (existConversation) {

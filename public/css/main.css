@@ -625,7 +625,8 @@ img.shadow {
 .chat.chat-panel .right-chat-message:hover .message-time {
   -webkit-transition: all .25s ease 0s;
   transition: all .25s ease 0s;
-  left: -38px;
+  left: -42px;
+    width: 40px;
   background-color: #ccc;
     line-height: 15px;
     border-radius: 5px;
@@ -892,8 +893,8 @@ img.shadow {
   height: 44px;
 }
 .avatar {
-  width: 21px;
-  height: 21px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   overflow: hidden;
   position: absolute;
@@ -999,4 +1000,34 @@ height: calc((var(--emoji-size)* var(--emoji-size-multiplier))* var(--row-count)
 .right-chat-message .file-download{
   text-decoration: none;
   color:white;
+}
+
+.wrap-avatar {
+  height: 44px;
+}
+
+.loader {
+  width: 22px;
+  aspect-ratio: 2;
+  --_g: no-repeat radial-gradient(circle closest-side,#373d42 90%,#0000);
+  background: 
+    var(--_g) 0%   50%,
+    var(--_g) 50%  50%,
+    var(--_g) 100% 50%;
+  background-size: calc(100%/3) 50%;
+  animation: l3 1s infinite linear;
+}
+@keyframes l3 {
+    20%{background-position:0%   0%, 50%  50%,100%  50%}
+    40%{background-position:0% 100%, 50%   0%,100%  50%}
+    60%{background-position:0%  50%, 50% 100%,100%   0%}
+    80%{background-position:0%  50%, 50%  50%,100% 100%}
+}
+
+#wrap-loader{
+  display: none;
+}
+
+#wrap-loader.active {
+  display: block;
 }

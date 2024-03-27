@@ -148,8 +148,7 @@
 
 
       })(jQuery)
-      $(document).ready(function () {
-         var multipleCancelButton = new Choices(
+      var multipleCancelButton = new Choices(
             "#choices-multiple-remove-button",
             {
                removeItemButton: true,
@@ -157,10 +156,6 @@
                renderChoiceLimit: 5,
             }
          )
-         
-         
-      })
-      
 
       function toggleNameInput() {
          const selectElement = document.getElementById('choices-multiple-remove-button');
@@ -168,7 +163,8 @@
          const selectedOptions = Array.from(selectElement.selectedOptions);
          const selectedValues = selectedOptions.map(option => option.value);
          const nameInputContainer = document.getElementById('nameInputContainer');
-         nameInputContainer.style.display = selectedValues.length === 1 ? 'none' : 'block';
+         nameInputContainer.style.display = selectedValues.length > 1 ? 'block' : 'none';
+         multipleCancelButton.hideDropdown()
          if (selectedValues.length > 1) {
             nameInput.setAttribute("required", "true");
          }
@@ -182,15 +178,35 @@
       })
       socket.on("getOnlineUser", function (data) {
          $("#" + data.user_id + "_status").addClass("active")
+         if (data.groupConversations && data.groupConversations.length > 0) {
+            data.groupConversations.forEach(conversation => {
+               // Kiểm tra xem trong cuộc trò chuyện có ít nhất một người dùng online không
+               const hasOnlineMember = conversation.members.some(member => member.isOnline == 1);
+               
+               // Nếu có ít nhất một người dùng online, thêm lớp "active" vào phần tử status của cuộc trò chuyện
+               if (hasOnlineMember) {
+                  $(`#${conversation._id} .online-indicator`).addClass('active')
+               }
+            });
+         }
       })
 
       socket.on("getOfflineUser", function (data) {
          $("#" + data.user_id + "_status").removeClass("active")
+         data.groupConversations.forEach(conversation => {
+            // Kiểm tra xem tất cả các thành viên của cuộc trò chuyện đều offline không
+            const allMembersOffline = conversation.members.every(member => member.isOnline === 0);
+            // Nếu tất cả thành viên đều offline, loại bỏ lớp "active" khỏi phần tử status của cuộc trò chuyện
+            if (allMembersOffline) {
+               $(`#${conversation._id} .online-indicator`).removeClass('active')
+            }
+         });
       })
 
       socket.on("loadNewConversation", function (data) {
          if (data.members.some(member => member._id == '<%= user._id %>')) {
             if (data.members.length > 2) {
+               const onlineMember = data.members.find(member => member.isOnline == 1);
                let html = `
                   <a
                      class="chat-item d-flex pl-3 pr-0 pt-3 pb-3"
@@ -198,7 +214,7 @@
                      id='${data._id}'
                   >
                      <div class="w-100">
-                        <div class="d-flex pl-0 h-100">
+                        <div class="d-flex pl-0 wrap-avatar">
                            <div class="mr-3 position-relative group-avatar">
                               <div class="avatar">
                                  <img
@@ -212,12 +228,9 @@
                                     alt="User 2"
                                  />
                               </div>
-                              <div class="avatar">
-                                 <img
-                                    src="../images/${data.members[2].profilePicture}"
-                                    alt="User 3"
-                                 />
-                              </div>
+                              <div
+                                 class="online-indicator ${onlineMember?.isOnline == 1 ? 'active' : ''}"
+                              ></div>
                            </div>
                            <div>
                               <p class="margin-auto fw-400 text-dark-75">
@@ -307,18 +320,8 @@
       }
       )
 
-      socket.on("loadNewChat", function(data) {
-         if(data.sender == '<%= user._id %>'){
-            $(`#last-con-${data.conversationId} span:first-child`).text("Bạn: ")
-            if(data.file) {
-               $(`#last-con-${data.conversationId} span:last-child`).text("file đính kèm")
-            } else if(data.image){
-               $(`#last-con-${data.conversationId} span:last-child`).text("hình ảnh")
-            } else {
-               $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
-            }
-         } else {
-            $('#conversations').prepend($(`#${data.conversationId}`))
+      socket.on("loadLatestChat", function(data) {
+         $('#conversations').prepend($(`#${data.conversationId}`))
             const timeAgoString = timeago().format(new Date(data.createdAt));
             $(`#${data.conversationId} .timeago`).text(timeAgoString);
             $(`#last-con-${data.conversationId} span:first-child`).text(data.senderName + ': ')
@@ -329,8 +332,8 @@
             } else {
                $(`#last-con-${data.conversationId} span:last-child`).text(data.message)
             }
-         }
       })
+      
 
       socket.on("loadDeleteConversation", function(data) {
          var conversationElement = $(`#${data}`)
@@ -406,6 +409,19 @@
             }
         });
     });
+    document.querySelector('.form-control').addEventListener('input', function(event) {
+    const keyword = event.target.value.trim(); // Lấy từ khóa tìm kiếm, loại bỏ khoảng trắng ở đầu và cuối
+    const conversations = document.querySelectorAll('.conversation-container');
+
+    conversations.forEach(conversation => {
+        const conversationName = conversation.querySelector('.fw-400.text-dark-75').innerText;
+        if (conversationName.toLowerCase().includes(keyword.toLowerCase())) {
+            conversation.style.display = 'block'; // Hiển thị cuộc trò chuyện nếu tên chứa từ khóa
+        } else {
+            conversation.style.display = 'none'; // Ẩn cuộc trò chuyện nếu tên không chứa từ khóa
+        }
+    });
+});
    </script>
 </body>
 

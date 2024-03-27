@@ -78,27 +78,44 @@ unp.on("connection", async (socket) => {
    //khi user connect thì set isOnline = '1'
    const userId = socket.handshake.auth.token;
    await User.findByIdAndUpdate({ _id: userId }, { $set: { isOnline: "1" } });
-
+   const groupConversations = await Conversation.find({
+      $and: [
+         { members: userId }, // Chứa userId
+         { $where: "this.members.length > 2" }, // Số lượng thành viên lớn hơn 2
+      ],
+   }).populate({
+      path: "members", // Tên trường cần populate
+      select: "isOnline", // Chỉ lấy trường isOnline
+   });
    //bắn sự kiện để các client biết user đang online
-   socket.broadcast.emit("getOnlineUser", { user_id: userId });
+   unp.emit("getOnlineUser", {
+      user_id: userId,
+      groupConversations: groupConversations,
+   });
 
    //bắn sự kiện tạo phòng khi các client chọn 1 cuộc trò chuyện
    socket.emit("createRoom");
 
    socket.on("disconnect", async () => {
       //khi disconnect thì set isOnline = '0'
+      const currentTime = new Date();
+      //khi disconnect thì set isOnline = '0' và cập nhật lastSeen
       await User.findByIdAndUpdate(
          { _id: userId },
-         { $set: { isOnline: "0" } }
+         { $set: { isOnline: "0", lastSeen: currentTime } }
       );
       //bắn sự kiện để các client biết user offline
-      socket.broadcast.emit("getOfflineUser", { user_id: userId });
+      socket.broadcast.emit("getOfflineUser", {
+         user_id: userId,
+         groupConversations: groupConversations,
+      });
       console.log("user disconnected");
    });
 
    //lắng nghe sự kiện khi người dùng nhắn tin
    socket.on("newChat", async (data) => {
-      socket.broadcast.emit("loadNewChat", data);
+      socket.to(data.conversationId).emit("loadNewChat", data);
+      socket.broadcast.emit("loadLatestChat", data);
    });
 
    //lắng nghe sự kiện khi client chọn 1 cuộc trò chuyện thì tham gia vào room riêng theo conversationID
@@ -119,12 +136,17 @@ unp.on("connection", async (socket) => {
    //lắng nghe sự kiện khi người dùng thu hồi tin nhắn
    socket.on("recallMessage", (data) => {
       console.log(data);
-      socket.broadcast.emit("loadDeleteMessage", data);
+      socket.to(data.conversationId).emit("loadDeleteMessage", data);
    });
 
    socket.on("deleteConversation", (data) => {
       console.log(data);
       socket.broadcast.emit("loadDeleteConversation", data);
+   });
+
+   socket.on("typing", function (data) {
+      // Gửi lại thông báo đến tất cả các máy khách
+      socket.broadcast.to(data.conversationId).emit("typingNotification", data);
    });
 });
 
